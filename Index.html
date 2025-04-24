@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vendor Database</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" />
+</head>
+<body class="text-black bg-white">
+
+  <!-- Navbar -->
+  <div id="navbar"></div>
+
+  <!-- Page Heading -->
+  <main class="mt-20 px-4">
+    <h1 class="text-3xl font-bold">Vendor Database</h1>
+    <p>Table</p>
+  </main>
+
+  <!-- Inline Form (Initially Hidden) -->
+  <div id="form-container" class="hidden fixed top-20 right-5 w-full max-w-md bg-white p-6 shadow-lg rounded-lg z-50">
+    <form id="dataForm" class="space-y-4" onsubmit="handleSubmit(event)">
+      <input type="text" name="name" placeholder="Your Name" required class="w-full p-2 border border-gray-300 rounded" />
+      <input type="email" name="email" placeholder="Your Email" required class="w-full p-2 border border-gray-300 rounded" />
+      <textarea name="message" placeholder="Your Message" class="w-full p-2 border border-gray-300 rounded"></textarea>
+      <button type="submit" class="w-full bg-green-500 text-white p-2 rounded">Submit</button>
+    </form>
+  </div>
+
+  <!-- Add Entry Button (Fixed Bottom Right) -->
+  <button id="toggleFormBtn" class="fixed bottom-5 right-5 bg-blue-500 text-white px-4 py-2 rounded shadow-lg z-50">
+    Add Entry
+  </button>
+
+  <!-- Submitting Spinner -->
+  <div id="loading" class="hidden fixed bottom-16 left-1/2 transform -translate-x-1/2 bg-gray-700 text-white px-4 py-2 rounded shadow z-50">
+    ⏳ Submitting...
+  </div>
+
+  <!-- Success Message -->
+  <div id="success-message" class="hidden fixed bottom-0 left-0 right-0 text-center bg-green-500 text-white py-3 z-40">
+    ✅ Form submitted successfully!
+  </div>
+
+  <!-- Toggle Form Visibility -->
+  <script>
+    document.getElementById('toggleFormBtn').addEventListener('click', () => {
+      const formEl = document.getElementById('form-container');
+      if (formEl) formEl.classList.toggle('hidden');
+    });
+  </script>
+
+  <!-- Submit to Google Script -->
+  <script>
+    let submitting = false;
+
+    async function handleSubmit(event) {
+      event.preventDefault();
+      if (submitting) return;
+      submitting = true;
+
+      // Show loading spinner
+      document.getElementById('loading').classList.remove('hidden');
+
+      const formData = new FormData(event.target);
+      const data = Object.fromEntries(formData);
+
+      await fetch('https://script.google.com/macros/s/AKfycbw5KtjyYsA-uVcTGoaJAF5LwzC4dcL10fGHCQ44QOvKCm__PfaAPOJzn4XKDiRbWDsv/exec', {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+
+      // Hide spinner and show success
+      document.getElementById('loading').classList.add('hidden');
+      document.getElementById('form-container').classList.add('hidden');
+      event.target.reset();
+      submitting = false;
+      showSuccessMessage();
+    }
+
+    function showSuccessMessage() {
+      const msg = document.getElementById('success-message');
+      msg.classList.remove('hidden');
+      setTimeout(() => {
+        msg.classList.add('hidden');
+      }, 3000);
+    }
+  </script>
+
+  <!-- Load Navbar -->
+  <script>
+    fetch('navbar.html')
+      .then(res => res.text())
+      .then(data => {
+        document.getElementById('navbar').innerHTML = data;
+
+        const menuBtn = document.getElementById('menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        if (menuBtn && mobileMenu) {
+          menuBtn.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+          });
+        }
+      });
+  </script>
+
+  <!-- Load Table from Google Sheet -->
+  <script>
+    const sheetId = '16dH0QCUyKd5fpM_0P4riOgF3n8COrhruSN0HbXau3pI';
+    const url = `https://spreadsheets.google.com/feeds/list/${sheetId}/1/public/values?alt=json`;
+
+    fetch(url)
+      .then(response => response.json())
+      .then(data => {
+        const rows = data.feed.entry;
+        const tableBody = document.querySelector('#sheet-table tbody');
+
+        rows.forEach(row => {
+          const tr = document.createElement('tr');
+          const name = row.gsx$name.$t;
+          const email = row.gsx$email.$t;
+          const age = row.gsx$age.$t;
+          tr.innerHTML = `<td>${name}</td><td>${email}</td><td>${age}</td>`;
+          tableBody.appendChild(tr);
+        });
+      })
+      .catch(err => console.error('Error loading data:', err));
+  </script>
+
+</body>
+</html>

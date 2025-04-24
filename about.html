@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tracking</title>
+  
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+  
+    <!-- Font Awesome -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+      integrity="sha512-papf2Em+HzZ4qDUFhHdbJPxyQe9M1nwlAi2N9zPyV2+q3Ict+iyDKs/Y6aJD18RMTCyzD2vP7WyEmNnVAUbDLg=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+  </head>
+<body class="text-black bg-white">
+  <div id="navbar"></div>
+
+  <main class="mt-20">
+    <h1 class="text-3xl font-bold">Welcome to Tracking Page</h1>
+    <p>This is your page content.</p>
+  </main>
+
+  <script>
+    fetch('navbar.html')
+      .then(res => res.text())
+      .then(data => {
+        document.getElementById('navbar').innerHTML = data;
+
+        const menuBtn = document.getElementById('menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        if (menuBtn) {
+          menuBtn.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+          });
+        }
+      });
+  </script>
+</body>
+</html>
