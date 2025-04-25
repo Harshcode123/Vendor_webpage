@@ -10,6 +10,10 @@
 
   <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" />
+
+  <!--Fetch data from table in table.js-->
+  <script src="table.js" defer></script>
+  
 </head>
 <body class="text-black bg-white">
 
@@ -19,7 +23,32 @@
   <!-- Page Heading -->
   <main class="mt-20 px-4">
     <h1 class="text-3xl font-bold">Vendor Database</h1>
-    <p>Table</p>
+    <!--Table Fatch from js-->
+    <div class="mt-10">
+      <!-- Table Container with Shadow and Rounded Corners -->
+      <div class="shadow-lg rounded-lg overflow-hidden">
+        <!-- Responsive Container with Scroll -->
+        <div class="overflow-x-auto max-h-[70vh] relative">
+          <!-- Table with Fixed Header -->
+          <table class="w-full">
+            <!-- Sticky Header -->
+            <thead class="sticky top-0 z-10">
+              <tr class="bg-gray-800 text-white">
+                <th class="px-4 py-3 text-left text-sm font-semibold uppercase tracking-wider whitespace-nowrap">Timestamp</th>
+                <th class="px-4 py-3 text-left text-sm font-semibold uppercase tracking-wider whitespace-nowrap">Name</th>
+                <th class="px-4 py-3 text-left text-sm font-semibold uppercase tracking-wider whitespace-nowrap">Email</th>
+                <th class="px-4 py-3 text-left text-sm font-semibold uppercase tracking-wider whitespace-nowrap">Message</th>
+              </tr>
+            </thead>
+            
+            <!-- Table Body -->
+            <tbody id="table-body" class="bg-white divide-y divide-gray-200">
+              <!-- Data will be inserted here by JavaScript -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   </main>
 
   <!-- Inline Form (Initially Hidden) -->
@@ -56,20 +85,22 @@
   </script>
 
   <!-- Submit to Google Script -->
-  <script>
-    let submitting = false;
+  <!-- Replace the existing "Submit to Google Script" section with this: -->
+<script>
+  let submitting = false;
 
-    async function handleSubmit(event) {
-      event.preventDefault();
-      if (submitting) return;
-      submitting = true;
+  async function handleSubmit(event) {
+    event.preventDefault();
+    if (submitting) return;
+    submitting = true;
 
-      // Show loading spinner
-      document.getElementById('loading').classList.remove('hidden');
+    // Show loading spinner
+    document.getElementById('loading').classList.remove('hidden');
 
-      const formData = new FormData(event.target);
-      const data = Object.fromEntries(formData);
+    const formData = new FormData(event.target);
+    const data = Object.fromEntries(formData);
 
+    try {
       await fetch('https://script.google.com/macros/s/AKfycbw5KtjyYsA-uVcTGoaJAF5LwzC4dcL10fGHCQ44QOvKCm__PfaAPOJzn4XKDiRbWDsv/exec', {
         method: 'POST',
         mode: 'no-cors',
@@ -77,22 +108,34 @@
         body: JSON.stringify(data)
       });
 
-      // Hide spinner and show success
-      document.getElementById('loading').classList.add('hidden');
+      // Hide form and reset
       document.getElementById('form-container').classList.add('hidden');
       event.target.reset();
-      submitting = false;
+      
+      // Show success message
       showSuccessMessage();
-    }
-
-    function showSuccessMessage() {
-      const msg = document.getElementById('success-message');
-      msg.classList.remove('hidden');
+      
+      // Refresh table after a short delay (to allow Google Sheets to update)
       setTimeout(() => {
-        msg.classList.add('hidden');
-      }, 3000);
+        loadTableData();
+      }, 2000);
+    } catch (error) {
+      console.error('Submission error:', error);
+    } finally {
+      // Hide spinner
+      document.getElementById('loading').classList.add('hidden');
+      submitting = false;
     }
-  </script>
+  }
+
+  function showSuccessMessage() {
+    const msg = document.getElementById('success-message');
+    msg.classList.remove('hidden');
+    setTimeout(() => {
+      msg.classList.add('hidden');
+    }, 3000);
+  }
+</script>
 
   <!-- Load Navbar -->
   <script>
@@ -109,29 +152,6 @@
           });
         }
       });
-  </script>
-
-  <!-- Load Table from Google Sheet -->
-  <script>
-    const sheetId = '16dH0QCUyKd5fpM_0P4riOgF3n8COrhruSN0HbXau3pI';
-    const url = `https://spreadsheets.google.com/feeds/list/${sheetId}/1/public/values?alt=json`;
-
-    fetch(url)
-      .then(response => response.json())
-      .then(data => {
-        const rows = data.feed.entry;
-        const tableBody = document.querySelector('#sheet-table tbody');
-
-        rows.forEach(row => {
-          const tr = document.createElement('tr');
-          const name = row.gsx$name.$t;
-          const email = row.gsx$email.$t;
-          const age = row.gsx$age.$t;
-          tr.innerHTML = `<td>${name}</td><td>${email}</td><td>${age}</td>`;
-          tableBody.appendChild(tr);
-        });
-      })
-      .catch(err => console.error('Error loading data:', err));
   </script>
 
 </body>
