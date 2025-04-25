@@ -22,7 +22,30 @@
 
   <!-- Page Heading -->
   <main class="mt-20 px-4">
-    <h1 class="text-3xl font-bold">Vendor Database</h1>
+    <!--DropDown-->
+    <!-- Add this right after your <h1> tag and before the table div -->
+<!-- Add this after your <h1> tag -->
+  <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+      <select id="categoryFilter" class="w-full p-2 border border-gray-300 rounded">
+        <option value="">All Categories</option>
+      </select>
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Vendor Type</label>
+      <select id="vendorTypeFilter" class="w-full p-2 border border-gray-300 rounded">
+        <option value="">All Types</option>
+      </select>
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Location</label>
+      <select id="locationFilter" class="w-full p-2 border border-gray-300 rounded">
+        <option value="">All Locations</option>
+      </select>
+    </div>
+  </div>
+<!--End Dropdown-->
     <!--Table Fatch from js-->
     <div class="mt-10">
       <!-- Table Container with Shadow and Rounded Corners -->
