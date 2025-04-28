@@ -3,10 +3,16 @@ let allTableData = [];
 const dropdownSheetName = "Dropdown"; // Name of your dropdown sheet
 const mainSheetName = "Vendor"; // Name of your main data sheet
 
+// Configuration for sheet access
+const sheetConfig = {
+  id: '16dH0QCUyKd5fpM_0P4riOgF3n8COrhruSN0HbXau3pI',
+  apiKey: 'AIzaSyBlha6kRb9lO7g3Id1wcD96QFYmQS7Kwow' // Consider moving to server-side in production
+};
+
 // Configuration for which columns to use for each dropdown
 const dropdownConfig = {
   categoryFilter: { column: 0 }, // Column A in Dropdown sheet
-  vendorTypeFilter: { column: 1 }, // Column B in Dropdown sheet
+  vendorTypeFilter: { column: 0 }, // Column B in Dropdown sheet
   locationFilter: { column: 2 } // Column C in Dropdown sheet
 };
 
@@ -19,9 +25,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Function to load dropdown values from Dropdown sheet
 async function loadDropdownValues() {
-  const sheetId = '16dH0QCUyKd5fpM_0P4riOgF3n8COrhruSN0HbXau3pI';
-  const apiKey = 'AIzaSyBlha6kRb9lO7g3Id1wcD96QFYmQS7Kwow';
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${dropdownSheetName}?key=${apiKey}`;
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetConfig.id}/values/${dropdownSheetName}?key=${sheetConfig.apiKey}`;
 
   try {
     const response = await fetch(url);
@@ -34,31 +38,131 @@ async function loadDropdownValues() {
     // Process each dropdown configuration
     for (const [filterId, config] of Object.entries(dropdownConfig)) {
       const filterElement = document.getElementById(filterId);
+      if (!filterElement) continue;
+      
       const uniqueValues = new Set();
       
       // Collect unique values from specified column
       for (let i = startRow; i < rows.length; i++) {
-        if (rows[i][config.column]) {
+        if (rows[i] && rows[i][config.column]) {
           uniqueValues.add(rows[i][config.column]);
         }
       }
       
-      // Populate dropdown
-      populateDropdown(filterElement, Array.from(uniqueValues).sort());
-      
-      // Add event listener
-      filterElement.addEventListener('change', applyFilters);
+      // Create searchable dropdown
+      createSearchableDropdown(filterId, Array.from(uniqueValues).sort());
     }
   } catch (error) {
     console.error('Error loading dropdown values:', error);
   }
 }
 
+// Function to create searchable dropdown
+function createSearchableDropdown(elementId, options) {
+  const originalSelect = document.getElementById(elementId);
+  if (!originalSelect) return;
+  
+  // Get the parent element that contains the label and select
+  const parentElement = originalSelect.parentElement;
+  
+  // Create wrapper div with relative positioning for the custom dropdown
+  const dropdownWrapper = document.createElement('div');
+  dropdownWrapper.className = 'relative w-full';
+  
+  // Create input element for search
+  const searchInput = document.createElement('input');
+  searchInput.type = 'text';
+  searchInput.className = 'w-full p-2 border border-gray-300 rounded pr-8'; // Added padding-right for the icon
+  searchInput.placeholder = 'Search or select...';
+  searchInput.dataset.value = ''; // To store the actual selected value
+  
+  // Create dropdown icon
+  const dropdownIcon = document.createElement('div');
+  dropdownIcon.className = 'absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none';
+  dropdownIcon.innerHTML = '<i class="fas fa-chevron-down"></i>';
+  
+  // Create dropdown container
+  const dropdownContainer = document.createElement('div');
+  dropdownContainer.className = 'absolute z-20 mt-1 w-full bg-white border border-gray-300 rounded shadow-lg max-h-60 overflow-y-auto hidden';
+  
+  // Add "All" option
+  const allOption = document.createElement('div');
+  allOption.className = 'p-2 hover:bg-gray-100 cursor-pointer';
+  allOption.textContent = 'All';
+  allOption.dataset.value = '';
+  allOption.addEventListener('click', () => {
+    searchInput.value = 'All';
+    searchInput.dataset.value = '';
+    dropdownContainer.classList.add('hidden');
+    triggerFilterChange(elementId);
+  });
+  dropdownContainer.appendChild(allOption);
+  
+  // Add all options
+  options.forEach(option => {
+    const optionElement = document.createElement('div');
+    optionElement.className = 'p-2 hover:bg-gray-100 cursor-pointer';
+    optionElement.textContent = option;
+    optionElement.dataset.value = option;
+    optionElement.addEventListener('click', () => {
+      searchInput.value = option;
+      searchInput.dataset.value = option;
+      dropdownContainer.classList.add('hidden');
+      triggerFilterChange(elementId);
+    });
+    dropdownContainer.appendChild(optionElement);
+  });
+  
+  // Handle input for filtering options
+  searchInput.addEventListener('input', () => {
+    const searchTerm = searchInput.value.toLowerCase();
+    
+    // Always show "All" option
+    dropdownContainer.childNodes.forEach((node, index) => {
+      if (index === 0) return; // Skip "All" option
+      
+      const optionText = node.textContent.toLowerCase();
+      if (optionText.includes(searchTerm)) {
+        node.classList.remove('hidden');
+      } else {
+        node.classList.add('hidden');
+      }
+    });
+    
+    // Show dropdown if not already visible
+    dropdownContainer.classList.remove('hidden');
+  });
+  
+  // Toggle dropdown on click
+  searchInput.addEventListener('click', () => {
+    dropdownContainer.classList.toggle('hidden');
+  });
+  
+  // Hide dropdown when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!dropdownWrapper.contains(e.target)) {
+      dropdownContainer.classList.add('hidden');
+    }
+  });
+  
+  // Add elements to the wrapper
+  dropdownWrapper.appendChild(searchInput);
+  dropdownWrapper.appendChild(dropdownIcon);
+  dropdownWrapper.appendChild(dropdownContainer);
+  
+  // Replace the original select with our custom dropdown
+  originalSelect.style.display = 'none';
+  parentElement.appendChild(dropdownWrapper);
+}
+
+// Function to trigger filter change event
+function triggerFilterChange(elementId) {
+  applyFilters();
+}
+
 // Function to load main table data
 async function loadTableData() {
-  const sheetId = '16dH0QCUyKd5fpM_0P4riOgF3n8COrhruSN0HbXau3pI';
-  const apiKey = 'AIzaSyBlha6kRb9lO7g3Id1wcD96QFYmQS7Kwow';
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${mainSheetName}?key=${apiKey}`;
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetConfig.id}/values/${mainSheetName}?key=${sheetConfig.apiKey}`;
 
   try {
     const response = await fetch(url);
@@ -66,6 +170,8 @@ async function loadTableData() {
     const rows = data.values;
     
     const tableBody = document.getElementById('table-body');
+    if (!tableBody) return;
+    
     tableBody.innerHTML = '';
     allTableData = [];
     
@@ -93,25 +199,16 @@ async function loadTableData() {
   }
 }
 
-// Helper functions
-function populateDropdown(dropdown, values, defaultText = 'All') {
-  dropdown.innerHTML = `<option value="">${defaultText}</option>`;
-  values.forEach(value => {
-    const option = document.createElement('option');
-    option.value = value;
-    option.textContent = value;
-    dropdown.appendChild(option);
-  });
-}
-
+// Function to apply filters
 function applyFilters() {
-  const categoryValue = document.getElementById('categoryFilter').value;
-  const vendorTypeValue = document.getElementById('vendorTypeFilter').value;
-  const locationValue = document.getElementById('locationFilter').value;
+  // Get values from custom searchable dropdowns
+  const categoryValue = document.querySelector('#categoryFilter + div input')?.dataset.value || '';
+  const vendorTypeValue = document.querySelector('#vendorTypeFilter + div input')?.dataset.value || '';
+  const locationValue = document.querySelector('#locationFilter + div input')?.dataset.value || '';
   
   const filteredData = allTableData.filter(row => {
     // Adjust these indexes based on your main sheet columns
-    const rowCategory = row[1] || ''; // Example: Column E for category
+    const rowCategory = row[1] || ''; // Example: Column B for category
     const rowVendorType = row[5] || ''; // Example: Column F for vendor type
     const rowLocation = row[6] || ''; // Example: Column G for location
     
@@ -122,6 +219,7 @@ function applyFilters() {
   
   renderTable(filteredData);
 }
+
 
 function renderTable(data) {
   const tableBody = document.getElementById('table-body');
