@@ -1,35 +1,31 @@
 <header class="bg-gray-100 shadow-md fixed top-0 w-full z-50">
-
-    <nav class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+    <nav class="max-w-7xl mx-auto px-0 py-4 flex items-center justify-between"> <!-- Changed px-4 to px-0 -->
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-      <div class="text-xl font-bold">Loadit</div>
+        <div class="text-xl font-bold pl-4">Loadit</div> <!-- Added pl-4 to only the logo -->
 
-  
-      <!-- Desktop Menu -->
-      <ul class="hidden md:flex space-x-6">
-        <li><a href="index.html" class="hover:text-blue-500">Vendor</a></li>
-        <li><a href="about.html" class="hover:text-blue-500">Tracking</a></li>
-        <li><a href="#" class="hover:text-blue-500">Dashboard</a></li>
-        <li><a href="#" class="hover:text-blue-500">Profile</a></li>
-      </ul>
-  
-      <!-- Hamburger Icon -->
-      <div class="block md:hidden">
-        <button id="menu-btn" class="text-2xl focus:outline-none">
-          <i class="fa-solid fa-bars"></i>
-        </button>
-      </div>
+        <!-- Desktop Menu -->
+        <ul class="hidden md:flex space-x-6 pr-4"> <!-- Added pr-4 to maintain right padding -->
+            <li><a href="index.html" class="hover:text-blue-500">Vendor</a></li>
+            <li><a href="tracking.html" class="hover:text-blue-500">Tracking</a></li>
+            <li><a href="#" class="hover:text-blue-500">Dashboard</a></li>
+            <li><a href="#" class="hover:text-blue-500">Profile</a></li>
+        </ul>
+
+        <!-- Hamburger Icon -->
+        <div class="block md:hidden pr-4"> <!-- Added pr-4 to maintain right padding -->
+            <button id="menu-btn" class="text-2xl focus:outline-none">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+        </div>
     </nav>
-  
+
     <!-- Mobile Menu -->
     <div id="mobile-menu" class="hidden md:hidden px-4 pb-4">
-      <ul class="space-y-4">
-        <li><a href="index.html" class="block hover:text-blue-500">Vendor</a></li>
-        <li><a href="about.html" class="block hover:text-blue-500">Tracking</a></li>
-        <li><a href="#" class="block hover:text-blue-500">Dashboard</a></li>
-        <li><a href="#" class="block hover:text-blue-500">Profile</a></li>
-      </ul>
+        <ul class="space-y-4">
+            <li><a href="index.html" class="block hover:text-blue-500">Vendor</a></li>
+            <li><a href="tracking.html" class="block hover:text-blue-500">Tracking</a></li>
+            <li><a href="#" class="block hover:text-blue-500">Dashboard</a></li>
+            <li><a href="#" class="block hover:text-blue-500">Profile</a></li>
+        </ul>
     </div>
-    
-  </header>
-  
+</header>

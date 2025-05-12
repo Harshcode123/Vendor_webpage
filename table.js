@@ -6,14 +6,7 @@ const mainSheetName = "Vendor"; // Name of your main data sheet
 // Configuration for sheet access
 const sheetConfig = {
   id: '16dH0QCUyKd5fpM_0P4riOgF3n8COrhruSN0HbXau3pI',
-  apiKey: 'AIzaSyBlha6kRb9lO7g3Id1wcD96QFYmQS7Kwow' // Consider moving to server-side in production
-};
-
-// Configuration for which columns to use for each dropdown
-const dropdownConfig = {
-  categoryFilter: { column: 0 }, // Column A in Dropdown sheet
-  vendorTypeFilter: { column: 0 }, // Column B in Dropdown sheet
-  locationFilter: { column: 2 } // Column C in Dropdown sheet
+  apiKey: 'AIzaSyBlha6kRb9lO7g3Id1wcD96QFYmQS7Kwow'
 };
 
 // Initialize when DOM is loaded
@@ -35,129 +28,39 @@ async function loadDropdownValues() {
     // Skip header row if exists
     const startRow = rows[0][0] === 'Category' ? 1 : 0;
     
-    // Process each dropdown configuration
-    for (const [filterId, config] of Object.entries(dropdownConfig)) {
-      const filterElement = document.getElementById(filterId);
-      if (!filterElement) continue;
-      
-      const uniqueValues = new Set();
-      
-      // Collect unique values from specified column
-      for (let i = startRow; i < rows.length; i++) {
-        if (rows[i] && rows[i][config.column]) {
-          uniqueValues.add(rows[i][config.column]);
-        }
-      }
-      
-      // Create searchable dropdown
-      createSearchableDropdown(filterId, Array.from(uniqueValues).sort());
+    // Process each dropdown
+    const categoryFilter = document.getElementById('categoryFilter');
+    const vendorTypeFilter = document.getElementById('vendorTypeFilter');
+    const locationFilter = document.getElementById('locationFilter');
+    
+    const categories = new Set();
+    const vendorTypes = new Set();
+    const locations = new Set();
+    
+    for (let i = startRow; i < rows.length; i++) {
+      if (rows[i][0]) categories.add(rows[i][0]); // Column A - Category
+      if (rows[i][1]) vendorTypes.add(rows[i][1]); // Column B - Vendor Type
+      if (rows[i][2]) locations.add(rows[i][2]);   // Column C - Location
     }
+    
+    // Populate dropdowns
+    populateDropdown(categoryFilter, Array.from(categories).sort());
+    populateDropdown(vendorTypeFilter, Array.from(vendorTypes).sort());
+    populateDropdown(locationFilter, Array.from(locations).sort());
+    
   } catch (error) {
     console.error('Error loading dropdown values:', error);
   }
 }
 
-// Function to create searchable dropdown
-function createSearchableDropdown(elementId, options) {
-  const originalSelect = document.getElementById(elementId);
-  if (!originalSelect) return;
-  
-  // Get the parent element that contains the label and select
-  const parentElement = originalSelect.parentElement;
-  
-  // Create wrapper div with relative positioning for the custom dropdown
-  const dropdownWrapper = document.createElement('div');
-  dropdownWrapper.className = 'relative w-full';
-  
-  // Create input element for search
-  const searchInput = document.createElement('input');
-  searchInput.type = 'text';
-  searchInput.className = 'w-full p-2 border border-gray-300 rounded pr-8'; // Added padding-right for the icon
-  searchInput.placeholder = 'Search or select...';
-  searchInput.dataset.value = ''; // To store the actual selected value
-  
-  // Create dropdown icon
-  const dropdownIcon = document.createElement('div');
-  dropdownIcon.className = 'absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none';
-  dropdownIcon.innerHTML = '<i class="fas fa-chevron-down"></i>';
-  
-  // Create dropdown container
-  const dropdownContainer = document.createElement('div');
-  dropdownContainer.className = 'absolute z-20 mt-1 w-full bg-white border border-gray-300 rounded shadow-lg max-h-60 overflow-y-auto hidden';
-  
-  // Add "All" option
-  const allOption = document.createElement('div');
-  allOption.className = 'p-2 hover:bg-gray-100 cursor-pointer';
-  allOption.textContent = 'All';
-  allOption.dataset.value = '';
-  allOption.addEventListener('click', () => {
-    searchInput.value = 'All';
-    searchInput.dataset.value = '';
-    dropdownContainer.classList.add('hidden');
-    triggerFilterChange(elementId);
-  });
-  dropdownContainer.appendChild(allOption);
-  
-  // Add all options
+// Helper function to populate dropdown
+function populateDropdown(selectElement, options) {
   options.forEach(option => {
-    const optionElement = document.createElement('div');
-    optionElement.className = 'p-2 hover:bg-gray-100 cursor-pointer';
+    const optionElement = document.createElement('option');
+    optionElement.value = option;
     optionElement.textContent = option;
-    optionElement.dataset.value = option;
-    optionElement.addEventListener('click', () => {
-      searchInput.value = option;
-      searchInput.dataset.value = option;
-      dropdownContainer.classList.add('hidden');
-      triggerFilterChange(elementId);
-    });
-    dropdownContainer.appendChild(optionElement);
+    selectElement.appendChild(optionElement);
   });
-  
-  // Handle input for filtering options
-  searchInput.addEventListener('input', () => {
-    const searchTerm = searchInput.value.toLowerCase();
-    
-    // Always show "All" option
-    dropdownContainer.childNodes.forEach((node, index) => {
-      if (index === 0) return; // Skip "All" option
-      
-      const optionText = node.textContent.toLowerCase();
-      if (optionText.includes(searchTerm)) {
-        node.classList.remove('hidden');
-      } else {
-        node.classList.add('hidden');
-      }
-    });
-    
-    // Show dropdown if not already visible
-    dropdownContainer.classList.remove('hidden');
-  });
-  
-  // Toggle dropdown on click
-  searchInput.addEventListener('click', () => {
-    dropdownContainer.classList.toggle('hidden');
-  });
-  
-  // Hide dropdown when clicking outside
-  document.addEventListener('click', (e) => {
-    if (!dropdownWrapper.contains(e.target)) {
-      dropdownContainer.classList.add('hidden');
-    }
-  });
-  
-  // Add elements to the wrapper
-  dropdownWrapper.appendChild(searchInput);
-  dropdownWrapper.appendChild(dropdownIcon);
-  dropdownWrapper.appendChild(dropdownContainer);
-  
-  // Replace the original select with our custom dropdown
-  originalSelect.style.display = 'none';
-  parentElement.appendChild(dropdownWrapper);
-}
-
-// Function to trigger filter change event
-function triggerFilterChange(elementId) {
-  applyFilters();
 }
 
 // Function to load main table data
@@ -168,85 +71,123 @@ async function loadTableData() {
     const response = await fetch(url);
     const data = await response.json();
     const rows = data.values;
-    
+
     const tableBody = document.getElementById('table-body');
     if (!tableBody) return;
-    
+
     tableBody.innerHTML = '';
     allTableData = [];
-    
+
     // Skip header row if exists
     const startRow = rows[0][0] === 'Timestamp' ? 1 : 0;
-    
+
     for (let i = startRow; i < rows.length; i++) {
       const row = rows[i];
       allTableData.push(row);
-      
+
       const tr = document.createElement('tr');
       tr.className = 'hover:bg-gray-50 transition-colors';
       tr.innerHTML = `
-        <td class="px-4 py-3 text-sm text-gray-700 border-b whitespace-nowrap">${formatDate(row[0] || '')}</td>
+        <td class="px-4 py-3 text-sm text-gray-700 border-b whitespace-nowrap">${formatDate(row[0])}</td>
         <td class="px-4 py-3 text-sm text-gray-700 border-b whitespace-nowrap">${row[1] || ''}</td>
+        <td class="px-4 py-3 text-sm text-gray-700 border-b whitespace-nowrap">${row[2] || ''}</td>
+        <td class="px-4 py-3 text-sm text-gray-700 border-b whitespace-nowrap">${row[3] || ''}</td>
+        <td class="px-4 py-3 text-sm text-gray-700 border-b whitespace-nowrap">${row[4] || ''}</td>
         <td class="px-4 py-3 text-sm text-gray-700 border-b whitespace-nowrap">
-          <a href="mailto:${row[2] || ''}" class="text-blue-600 hover:underline">${row[2] || ''}</a>
+          <button class="edit-btn px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600" data-rowid="${i - startRow}">
+            Edit
+          </button>
         </td>
-        <td class="px-4 py-3 text-sm text-gray-700 border-b break-words max-w-xs">${row[3] || ''}</td>
       `;
       tableBody.appendChild(tr);
     }
+
+    // Add event listeners for edit buttons
+    document.querySelectorAll('.edit-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const rowId = this.getAttribute('data-rowid');
+        editVendor(rowId);
+      });
+    });
+
+    // Add event listeners for dropdown filters
+    document.getElementById('categoryFilter').addEventListener('change', applyFilters);
+    document.getElementById('vendorTypeFilter').addEventListener('change', applyFilters);
+    document.getElementById('locationFilter').addEventListener('change', applyFilters);
+
   } catch (error) {
     console.error('Error loading table data:', error);
   }
 }
 
-// Function to apply filters
-function applyFilters() {
-  // Get values from custom searchable dropdowns
-  const categoryValue = document.querySelector('#categoryFilter + div input')?.dataset.value || '';
-  const vendorTypeValue = document.querySelector('#vendorTypeFilter + div input')?.dataset.value || '';
-  const locationValue = document.querySelector('#locationFilter + div input')?.dataset.value || '';
-  
-  const filteredData = allTableData.filter(row => {
-    // Adjust these indexes based on your main sheet columns
-    const rowCategory = row[1] || ''; // Example: Column B for category
-    const rowVendorType = row[5] || ''; // Example: Column F for vendor type
-    const rowLocation = row[6] || ''; // Example: Column G for location
+// Function to handle edit action
+async function editVendor(rowId) {
+  try {
+    // Get the vendor data
+    const vendorData = allTableData[rowId];
     
-    return (!categoryValue || rowCategory === categoryValue) &&
-           (!vendorTypeValue || rowVendorType === vendorTypeValue) &&
-           (!locationValue || rowLocation === locationValue);
-  });
-  
-  renderTable(filteredData);
+    // Store the row ID in session storage
+    sessionStorage.setItem('editRowId', rowId);
+    sessionStorage.setItem('editRowData', JSON.stringify(vendorData));
+    
+    // Redirect to form page
+    window.location.href = 'form.html?edit=true';
+
+  } catch (error) {
+    console.error('Error loading edit form:', error);
+    alert('Error loading form for editing');
+  }
 }
 
+// Function to apply filters
+function applyFilters() {
+  const categoryValue = document.getElementById('categoryFilter').value;
+  const vendorTypeValue = document.getElementById('vendorTypeFilter').value;
+  const locationValue = document.getElementById('locationFilter').value;
+
+  const filteredData = allTableData.filter(row => {
+    const rowCategory = row[1] || ''; // Vendor Name as category
+    const rowVendorType = row[8] || ''; // Vehicle Types as vendor type
+    const rowLocation = row[2] || ''; // Office Location as location
+
+    return (!categoryValue || rowCategory.includes(categoryValue)) &&
+           (!vendorTypeValue || rowVendorType.includes(vendorTypeValue)) &&
+           (!locationValue || rowLocation.includes(locationValue));
+  });
+
+  renderTable(filteredData);
+}
 
 function renderTable(data) {
   const tableBody = document.getElementById('table-body');
   tableBody.innerHTML = '';
-  
-  data.forEach(row => {
+
+  data.forEach((row, index) => {
     const tr = document.createElement('tr');
     tr.className = 'hover:bg-gray-50 transition-colors';
     tr.innerHTML = `
-      <td class="px-4 py-3 text-sm text-gray-700 border-b whitespace-nowrap">${formatDate(row[0] || '')}</td>
+      <td class="px-4 py-3 text-sm text-gray-700 border-b whitespace-nowrap">${formatDate(row[0])}</td>
       <td class="px-4 py-3 text-sm text-gray-700 border-b whitespace-nowrap">${row[1] || ''}</td>
+      <td class="px-4 py-3 text-sm text-gray-700 border-b whitespace-nowrap">${row[2] || ''}</td>
+      <td class="px-4 py-3 text-sm text-gray-700 border-b whitespace-nowrap">${row[3] || ''}</td>
+      <td class="px-4 py-3 text-sm text-gray-700 border-b whitespace-nowrap">${row[4] || ''}</td>
       <td class="px-4 py-3 text-sm text-gray-700 border-b whitespace-nowrap">
-        <a href="mailto:${row[2] || ''}" class="text-blue-600 hover:underline">${row[2] || ''}</a>
+        <button class="edit-btn px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600" data-rowid="${index}">
+          Edit
+        </button>
       </td>
-      <td class="px-4 py-3 text-sm text-gray-700 border-b break-words max-w-xs">${row[3] || ''}</td>
     `;
     tableBody.appendChild(tr);
+    
+    // Add event listener to the new edit button
+    tr.querySelector('.edit-btn').addEventListener('click', function() {
+      editVendor(this.getAttribute('data-rowid'));
+    });
   });
 }
 
 function formatDate(dateString) {
   if (!dateString) return '';
   const date = new Date(dateString);
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = date.getFullYear();
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  return `${day}-${month}-${year} ${hours}:${minutes}`;
+  return date.toLocaleString(); // Format based on user's locale
 }

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tracking</title>
+
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+        integrity="sha512-papf2Em+HzZ4qDUFhHdbJPxyQe9M1nwlAi2N9zPyV2+q3Ict+iyDKs/Y6aJD18RMTCyzD2vP7WyEmNnVAUbDLg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Optimized CSS */
+        .table-header {
+            background-color: #1a1a1a;
+            color: #ffffff;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .table-row:hover {
+            background-color: #f0f4f8;
+        }
+
+        .sheet-btn {
+            transition: all 0.2s ease;
+            min-width: 80px;
+        }
+
+        .sheet-btn.active {
+            background-color: #000000 !important;
+            color: #ffffff !important;
+            border-color: #000000 !important;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        #dataTable {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        #dataTable th,
+        #dataTable td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        #dataTable th {
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+
+        .search-container input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+
+        @media (max-width: 768px) {
+            .header-container {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .buttons-container {
+                overflow-x: auto;
+                padding-bottom: 8px;
+                width: 100%;
+            }
+
+            .buttons-container::-webkit-scrollbar {
+                height: 4px;
+            }
+
+            #dataTable th,
+            #dataTable td {
+                padding: 8px 12px;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100">
+    <div id="navbar"></div>
+    <div class="container mx-auto px-4 py-6 mt-16">
+        <div class="bg-white rounded-lg shadow-md p-4">
+            <!-- Header section with buttons and search in one line -->
+            <div class="header-container">
+                <div class="buttons-container">
+                    <button
+                        class="sheet-btn bg-white hover:bg-gray-50 text-gray-800 px-4 py-2 rounded transition-colors border border-gray-300 shadow-sm"
+                        data-sheet="Lifelong">Lifelong</button>
+                    <button
+                        class="sheet-btn bg-white hover:bg-gray-50 text-gray-800 px-4 py-2 rounded transition-colors border border-gray-300 shadow-sm"
+                        data-sheet="Normal">Normal</button>
+                    <button
+                        class="sheet-btn bg-white hover:bg-gray-50 text-gray-800 px-4 py-2 rounded transition-colors border border-gray-300 shadow-sm"
+                        data-sheet="B">Sheet B</button>
+                    <button
+                        class="sheet-btn bg-white hover:bg-gray-50 text-gray-800 px-4 py-2 rounded transition-colors border border-gray-300 shadow-sm"
+                        data-sheet="C">Sheet C</button>
+                    <button
+                        class="sheet-btn bg-white hover:bg-gray-50 text-gray-800 px-4 py-2 rounded transition-colors border border-gray-300 shadow-sm"
+                        data-sheet="D">Sheet D</button>
+                </div>
+
+                <div class="search-container">
+                    <div class="relative flex-grow">
+                        <input type="text" id="searchInput" placeholder="Search..."
+                            class="w-full pl-8 pr-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <svg class="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
+                    <button id="refreshBtn" class="bg-gray-100 hover:bg-gray-200 text-gray-800 p-2 rounded-full">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Table container with fixed height and scroll -->
+            <div class="overflow-auto" style="max-height: 80vh;">
+                <table class="w-full min-w-max" id="dataTable">
+                    <thead>
+                        <tr class="table-header">
+                            <!-- Columns will be added dynamically -->
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Data rows will be added dynamically -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- No results message -->
+            <div id="noResults" class="hidden text-center py-8 text-gray-500">
+                No matching records found
+            </div>
+
+            <!-- Current sheet indicator -->
+            <div id="currentSheet" class="text-sm text-gray-500 mt-2">
+                Currently viewing: <span class="font-medium">None</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="Tracking.js"></script>
+
+    <script>
+        fetch('navbar.html')
+            .then(res => res.text())
+            .then(data => {
+                document.getElementById('navbar').innerHTML = data;
+
+                const menuBtn = document.getElementById('menu-btn');
+                const mobileMenu = document.getElementById('mobile-menu');
+                if (menuBtn) {
+                    menuBtn.addEventListener('click', () => {
+                        mobileMenu.classList.toggle('hidden');
+                    });
+                }
+            });
+    </script>
+</body>
+
+</html>

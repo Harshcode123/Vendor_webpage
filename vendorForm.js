@@ -3,6 +3,156 @@ const SHEET_ID = '16dH0QCUyKd5fpM_0P4riOgF3n8COrhruSN0HbXau3pI';
 const API_KEY = 'AIzaSyBlha6kRb9lO7g3Id1wcD96QFYmQS7Kwow';
 
 // Configuration for dropdown data
+// At the start of your vendorForm.js, add this:
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if we're in edit mode
+    const urlParams = new URLSearchParams(window.location.search);
+    const isEdit = urlParams.has('edit');
+    
+    if (isEdit) {
+      // Get the stored data
+      const rowData = JSON.parse(sessionStorage.getItem('editRowData'));
+      const rowId = sessionStorage.getItem('editRowId');
+      
+      if (rowData) {
+        fillFormWithData(rowData);
+        document.getElementById('vendorForm').dataset.rowid = rowId;
+      }
+    }
+  });
+  
+  // Function to fill form with existing data
+  function fillFormWithData(data) {
+    // Basic details
+    document.getElementById('vendorName').value = data[1] || '';
+    document.getElementById('officeLocation').value = data[2] || '';
+    document.getElementById('contactNumber').value = data[3] || '';
+    document.getElementById('alternateNumber').value = data[4] || '';
+    document.getElementById('scanPodNumber').value = data[5] || '';
+    document.getElementById('accountantNumber').value = data[6] || '';
+  
+    // Vendor status
+    if (data[7] === 'Blacklist') {
+      document.getElementById('statusBlacklist').checked = true;
+    } else {
+      document.getElementById('statusNormal').checked = true;
+    }
+  
+    // Vehicle types
+    const vehicleTypes = (data[8] || '').split(', ');
+    vehicleTypes.forEach(type => {
+      const checkbox = document.querySelector(`#vehicleTypeOptions input[value="${type.trim()}"]`);
+      if (checkbox) {
+        checkbox.checked = true;
+        dropdownConfig.vehicleType.selected.push(type.trim());
+      }
+    });
+    updateSelectedOptions(dropdownConfig.vehicleType);
+  
+    // Locations
+    const fromLocations1 = (data[9] || '').split(', ');
+    fromLocations1.forEach(loc => {
+      const checkbox = document.querySelector(`#fromLocation1Options input[value="${loc.trim()}"]`);
+      if (checkbox) {
+        checkbox.checked = true;
+        dropdownConfig.fromLocations.elements[0].selected.push(loc.trim());
+      }
+    });
+    updateSelectedOptions(dropdownConfig.fromLocations.elements[0]);
+  
+    const toLocations1 = (data[10] || '').split(', ');
+    toLocations1.forEach(loc => {
+      const checkbox = document.querySelector(`#toLocation1Options input[value="${loc.trim()}"]`);
+      if (checkbox) {
+        checkbox.checked = true;
+        dropdownConfig.toLocations.elements[0].selected.push(loc.trim());
+      }
+    });
+    updateSelectedOptions(dropdownConfig.toLocations.elements[0]);
+  
+    const fromLocations2 = (data[11] || '').split(', ');
+    fromLocations2.forEach(loc => {
+      const checkbox = document.querySelector(`#fromLocation2Options input[value="${loc.trim()}"]`);
+      if (checkbox) {
+        checkbox.checked = true;
+        dropdownConfig.fromLocations.elements[1].selected.push(loc.trim());
+      }
+    });
+    updateSelectedOptions(dropdownConfig.fromLocations.elements[1]);
+  
+    const toLocations2 = (data[12] || '').split(', ');
+    toLocations2.forEach(loc => {
+      const checkbox = document.querySelector(`#toLocation2Options input[value="${loc.trim()}"]`);
+      if (checkbox) {
+        checkbox.checked = true;
+        dropdownConfig.toLocations.elements[1].selected.push(loc.trim());
+      }
+    });
+    updateSelectedOptions(dropdownConfig.toLocations.elements[1]);
+  }
+  
+  // Modify your form submission handler to include edit functionality
+  document.getElementById('vendorForm').addEventListener('submit', async function(event) {
+    event.preventDefault();
+    
+    // Show loading spinner
+    document.getElementById('loading').classList.remove('hidden');
+    
+    try {
+      // Get all form data
+      const formData = new FormData(this);
+      const isEdit = this.dataset.rowid !== undefined;
+      
+      // Add the multi-select values to the form data
+      formData.append('vehicleTypes', dropdownConfig.vehicleType.selected.join(', '));
+      formData.append('fromLocations1', dropdownConfig.fromLocations.elements[0].selected.join(', '));
+      formData.append('toLocations1', dropdownConfig.toLocations.elements[0].selected.join(', '));
+      formData.append('fromLocations2', dropdownConfig.fromLocations.elements[1].selected.join(', '));
+      formData.append('toLocations2', dropdownConfig.toLocations.elements[1].selected.join(', '));
+      
+      // Add edit flag and row ID if editing
+      if (isEdit) {
+        formData.append('isEdit', 'true');
+        formData.append('rowId', this.dataset.rowid);
+      }
+      
+      // Convert form data to object
+      const data = {};
+      formData.forEach((value, key) => {
+        data[key] = value;
+      });
+      
+      // Send data to Google Sheets
+      await fetch('https://script.google.com/macros/s/AKfycbw5KtjyYsA-uVcTGoaJAF5LwzC4dcL10fGHCQ44QOvKCm__PfaAPOJzn4XKDiRbWDsv/exec', {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+      });
+      
+      // Show success message
+      document.getElementById('success-message').classList.remove('hidden');
+      
+      // Clear session storage
+      sessionStorage.removeItem('editRowId');
+      sessionStorage.removeItem('editRowData');
+      
+      // Redirect to index.html after 2 seconds
+      setTimeout(() => {
+        window.location.href = 'Index.html';
+      }, 2000);
+      
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      alert('Error submitting form. Please try again.');
+    } finally {
+      // Hide loading spinner
+      document.getElementById('loading').classList.add('hidden');
+    }
+  });
+
 const dropdownConfig = {
     vehicleType: {
         sheetName: 'Dropdown',
@@ -207,6 +357,7 @@ function setupDropdownToggle() {
 // Form submission
 // Update the form submission handler to close the modal
 // Update the form submission handler
+// Modify the form submission handler
 document.getElementById('vendorForm').addEventListener('submit', async function(event) {
     event.preventDefault();
     
@@ -216,6 +367,7 @@ document.getElementById('vendorForm').addEventListener('submit', async function(
     try {
         // Get all form data
         const formData = new FormData(this);
+        const isEdit = this.dataset.rowid !== undefined;
         
         // Add the multi-select values to the form data
         formData.append('vehicleTypes', dropdownConfig.vehicleType.selected.join(', '));
@@ -223,6 +375,12 @@ document.getElementById('vendorForm').addEventListener('submit', async function(
         formData.append('toLocations1', dropdownConfig.toLocations.elements[0].selected.join(', '));
         formData.append('fromLocations2', dropdownConfig.fromLocations.elements[1].selected.join(', '));
         formData.append('toLocations2', dropdownConfig.toLocations.elements[1].selected.join(', '));
+        
+        // Add edit flag and row ID if editing
+        if (isEdit) {
+            formData.append('isEdit', 'true');
+            formData.append('rowId', this.dataset.rowid);
+        }
         
         // Convert form data to object
         const data = {};

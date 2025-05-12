@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Helper Ticket</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .submit-btn {
+            background-color: black;
+            color: white;
+            transition: all 0.3s ease;
+        }
+        .submit-btn:hover {
+            background-color: #333;
+        }
+        .submit-btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .change-btn {
+            background-color: #4b5563;
+            color: white;
+            transition: all 0.3s ease;
+        }
+        .change-btn:hover {
+            background-color: #6b7280;
+        }
+        .change-btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-2xl bg-white rounded-lg shadow-md p-6">
+        <h1 class="text-2xl font-bold text-gray-800 mb-6 text-center">Helper Ticket</h1>
+        
+        <form id="taskForm" class="space-y-4">
+            <!-- Hidden field for timestamp -->
+            <input type="hidden" id="timestamp" name="timestamp">
+            
+            <!-- Email field with change button -->
+            <div>
+                <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Your Email Address</label>
+                <div class="flex gap-2">
+                    <input type="email" id="email" name="email" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    <button type="button" id="changeEmailBtn" class="change-btn px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 whitespace-nowrap">
+                        Change Email
+                    </button>
+                </div>
+                <p class="text-xs text-gray-500 mt-1">Only registered emails are allowed</p>
+            </div>
+            
+            <!-- Error message area -->
+            <div id="errorMessage" class="hidden p-4 bg-red-100 text-red-700 rounded-md text-sm">
+                Email verification error
+            </div>
+            
+            <!-- Form fields (initially hidden) -->
+            <div id="formFields" class="hidden space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="lrNumber" class="block text-sm font-medium text-gray-700 mb-1">LR Number</label>
+                        <input type="text" id="lrNumber" name="lrNumber" required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    
+                    <div>
+                        <label for="assignee" class="block text-sm font-medium text-gray-700 mb-1">Assignee Name</label>
+                        <select id="assignee" name="assignee" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                            <option value="" disabled selected>Select Assignee</option>
+                            <option value="Harsh">Harsh</option>
+                            <option value="Naveen">Naveen</option>
+                            <option value="Ajit">Ajit</option>
+                            <option value="Deepesh">Deepesh</option>
+                            <option value="Ajay">Ajay</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="task" class="block text-sm font-medium text-gray-700 mb-1">Task</label>
+                        <textarea id="task" name="task" rows="3" required
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"></textarea>
+                    </div>
+                    
+                    <div>
+                        <label for="reason" class="block text-sm font-medium text-gray-700 mb-1">Reason</label>
+                        <select id="reason" name="reason" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                            <option value="" disabled selected>Select Reason</option>
+                            <option value="CA">CA</option>
+                            <option value="Collect">Collect</option>
+                            <option value="Shortage">Shortage</option>
+                            <option value="Scan POD">Scan POD</option>
+                            <option value="Invoicing">Invoicing</option>
+                            <option value="Reconciliation">Reconciliation</option>
+                            <option value="Rejection">Rejection</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="completionDate" class="block text-sm font-medium text-gray-700 mb-1">Completion Date</label>
+                        <input type="date" id="completionDate" name="completionDate" required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    
+                    <div class="flex items-end justify-end">
+                        <button type="submit" id="submitBtn" class="submit-btn px-6 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 w-full md:w-auto">
+                            Submit
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+        
+        <div id="successMessage" class="hidden mt-4 p-4 bg-green-100 text-green-700 rounded-md">
+            Form submitted successfully! Thank you.
+        </div>
+    </div>
+
+    <script>
+   document.addEventListener('DOMContentLoaded', function() {
+    // Google Sheets configuration
+    const SPREADSHEET_ID = '1mOZughrEQRjMrCrKljGe-DzN8H9epvrbOeMpmaMRmek';
+    const DOERS_SHEET = 'Doers';
+    const API_KEY = 'AIzaSyBlha6kRb9lO7g3Id1wcD96QFYmQS7Kwow';
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwio0O83zP0Z58bnaPtEgS07hgIOBCgj0pzTXSKS3O4v6UMi0wxHne_E7Pzly2Dn26r/exec';
+    
+    // Auto-capture timestamp
+    const timestampField = document.getElementById('timestamp');
+    timestampField.value = new Date().toISOString();
+    
+    const emailField = document.getElementById('email');
+    const emailChangeBtn = document.getElementById('changeEmailBtn');
+    const form = document.getElementById('taskForm');
+    const formFields = document.getElementById('formFields');
+    const successMessage = document.getElementById('successMessage');
+    const errorMessage = document.getElementById('errorMessage');
+    const submitButton = form.querySelector('button[type="submit"]');
+    
+    // Load saved email if available
+    if (localStorage.getItem('userEmail')) {
+        emailField.value = localStorage.getItem('userEmail');
+        verifyEmail(emailField.value);
+    }
+    
+    // Email change button handler
+    emailChangeBtn.addEventListener('click', function() {
+        // Enable editing email field
+        emailField.readOnly = false;
+        emailField.focus();
+        formFields.classList.add('hidden');
+        submitButton.disabled = true;
+        
+        // Change button text
+        this.textContent = 'Verify';
+        // Change button function to verify instead of edit
+        this.removeEventListener('click', arguments.callee);
+        this.addEventListener('click', function() {
+            verifyEmail(emailField.value);
+        });
+    });
+    
+    // Form submission handler
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        submitFormData();
+    });
+    
+    async function verifyEmail(email) {
+        email = email.trim();
+        
+        // Basic email validation
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            showError('Please enter a valid email address');
+            return;
+        }
+        
+        // Show verifying state
+        showVerifying();
+        
+        try {
+            // Check if email exists in Doers sheet
+            const response = await fetch(
+                `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${DOERS_SHEET}!A:A?key=${API_KEY}`
+            );
+            
+            if (!response.ok) {
+                throw new Error(`Google Sheets API error: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            const emails = data.values ? data.values.flat() : [];
+            
+            if (emails.includes(email)) {
+                // Email is registered
+                localStorage.setItem('userEmail', email);
+                emailField.readOnly = true;
+                emailChangeBtn.textContent = 'Change Email';
+                formFields.classList.remove('hidden');
+                submitButton.disabled = false;
+                errorMessage.classList.add('hidden');
+                
+                // Reset change button functionality
+                emailChangeBtn.removeEventListener('click', arguments.callee);
+                emailChangeBtn.addEventListener('click', function() {
+                    emailField.readOnly = false;
+                    emailField.focus();
+                    formFields.classList.add('hidden');
+                    submitButton.disabled = true;
+                    this.textContent = 'Verify';
+                    
+                    this.removeEventListener('click', arguments.callee);
+                    this.addEventListener('click', function() {
+                        verifyEmail(emailField.value);
+                    });
+                });
+            } else {
+                showError('This email is not authorized to submit the form');
+                emailField.readOnly = false;
+                emailField.focus();
+                formFields.classList.add('hidden');
+                submitButton.disabled = true;
+            }
+        } catch (error) {
+            console.error('Error verifying email:', error);
+            showError('Error verifying email: ' + error.message);
+            emailField.readOnly = false;
+            emailField.focus();
+            formFields.classList.add('hidden');
+            submitButton.disabled = true;
+        }
+    }
+    
+    function submitFormData() {
+        submitButton.disabled = true;
+        submitButton.textContent = 'Submitting...';
+        
+        // Create form data object
+        const formData = new FormData();
+        formData.append('timestamp', timestampField.value);
+        formData.append('email', emailField.value.trim());
+        formData.append('lrNumber', document.getElementById('lrNumber').value);
+        formData.append('assignee', document.getElementById('assignee').value);
+        formData.append('task', document.getElementById('task').value);
+        formData.append('reason', document.getElementById('reason').value);
+        formData.append('completionDate', document.getElementById('completionDate').value);
+        formData.append('action', 'submitForm');
+        
+        // Log data being submitted (for debugging)
+        console.log('Submitting form data:', {
+            timestamp: timestampField.value,
+            email: emailField.value.trim(),
+            lrNumber: document.getElementById('lrNumber').value,
+            assignee: document.getElementById('assignee').value,
+            task: document.getElementById('task').value,
+            reason: document.getElementById('reason').value,
+            completionDate: document.getElementById('completionDate').value,
+            action: 'submitForm'
+        });
+        
+        // Use XMLHttpRequest for better compatibility with Google Apps Script
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', SCRIPT_URL, true);
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4) {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Submit';
+                
+                // Google Apps Script with no-cors option won't return meaningful status
+                // So we assume success if we get here
+                console.log('Response received:', xhr.responseText);
+                
+                // Show success message
+                showSuccess();
+                form.reset();
+                
+                // Restore email and lock it
+                emailField.value = localStorage.getItem('userEmail');
+                emailField.readOnly = true;
+            }
+        };
+        
+        xhr.onerror = function(error) {
+            console.error('XHR Error:', error);
+            submitButton.disabled = false;
+            submitButton.textContent = 'Submit';
+            showError('Error submitting form. Please try again later.');
+        };
+        
+        // Send the form data
+        xhr.send(formData);
+    }
+    
+    function showVerifying() {
+        errorMessage.textContent = 'Verifying email...';
+        errorMessage.classList.remove('hidden', 'bg-red-100', 'text-red-700');
+        errorMessage.classList.add('bg-blue-100', 'text-blue-700');
+    }
+    
+    function showSuccess() {
+        successMessage.classList.remove('hidden');
+        setTimeout(() => {
+            successMessage.classList.add('hidden');
+        }, 3000);
+    }
+    
+    function showError(message) {
+        errorMessage.textContent = message;
+        errorMessage.classList.remove('hidden', 'bg-blue-100', 'text-blue-700');
+        errorMessage.classList.add('bg-red-100', 'text-red-700');
+    }
+});
+    </script>
+</body>
+</html>
